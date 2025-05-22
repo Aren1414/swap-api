@@ -1,13 +1,25 @@
-export default async function handler(req, res) {
-  const { sellToken, buyToken, sellAmount } = req.query;
+export default async function handler(request, response) {
+  const { sellToken, buyToken, amount } = request.query;
 
-  const url = `https://monad.api.0x.org/swap/v2/quote?sellToken=${sellToken}&buyToken=${buyToken}&sellAmount=${sellAmount}`;
+  const apiKey = process.env.ZEROX_API_KEY;
+
+  const url = `https://api.0x.org/v2/swap?buyToken=${buyToken}&sellToken=${sellToken}&sellAmount=${amount}`;
 
   try {
-    const response = await fetch(url);
-    const data = await response.json();
-    res.status(200).json(data);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch quote." });
+    const res = await fetch(url, {
+      headers: {
+        '0x-api-key': apiKey
+      }
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      return response.status(res.status).json(errorData);
+    }
+
+    const data = await res.json();
+    return response.status(200).json(data);
+  } catch (error) {
+    return response.status(500).json({ error: 'Internal Server Error' });
   }
 }
